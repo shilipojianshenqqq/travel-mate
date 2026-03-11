@@ -122,7 +122,7 @@ export default function TravelMap({ spots, order = [] }: MapProps) {
     setSpotLocations(locationsWithCoords)
 
     // 添加标记
-    const bounds = []
+    const bounds: [number, number][] = []
     locationsWithCoords.forEach((spot, index) => {
       if (!spot.location) return
 
