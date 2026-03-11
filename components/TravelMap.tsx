@@ -26,6 +26,8 @@ export default function TravelMap({ spots, order = [] }: MapProps) {
   const [spotLocations, setSpotLocations] = useState<Spot[]>(spots)
   const [mapError, setMapError] = useState("")
 
+  const AMAP_KEY = process.env.NEXT_PUBLIC_AMAP_KEY || "a7ea668b59f3ec1d33f0534b63b1c76a"
+
   // 加载高德地图 JS API
   useEffect(() => {
     if (window.AMap) {
