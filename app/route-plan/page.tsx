@@ -392,13 +392,17 @@ export default function RoutePlan() {
     
     // 先解析景点并搜索经纬度，在地图上显示标记
     if (formData.city && formData.attractions) {
+      console.log('开始搜索POI:', formData.city, formData.attractions)
       const pois = await parseAndSearchPOIs(formData.city, formData.attractions)
+      console.log('搜索到POI:', pois)
       if (pois.length > 0) {
         setSelectedPOIs(pois)
         // 如果有多个景点，规划路线
         if (pois.length >= 2) {
           planRoute(pois)
         }
+      } else {
+        console.warn('未搜索到POI，使用备选方案')
       }
     }
     
