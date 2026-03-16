@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, ExternalLink, MapPin } from 'lucide-react'
 
 type FormData = {
   destination: string
@@ -19,12 +19,47 @@ type StreamData = {
   message?: string
 }
 
+type POI = {
+  name: string
+  address: string
+  location: string
+  photos?: string[]
+}
+
+// 预设景点图片（当 API 无法获取时使用）
+const DEFAULT_PHOTOS: Record<string, string[]> = {
+  '北京': [
+    'https://images.unsplash.com/photo-1599571234909-29ed5d1321d6?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1532630571098-79c3d7244e5e?w=400&h=300&fit=crop'
+  ],
+  '上海': [
+    'https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1548919973-5cef591cdbc9?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1553913861-c0fddf2619ee?w=400&h=300&fit=crop'
+  ],
+  '云南': [
+    'https://images.unsplash.com/photo-1580810453078-3e8eb385a2a4?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1528181304800-259b08848526?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1585983633883-3995f9a2880f?w=400&h=300&fit=crop'
+  ]
+}
+
+// 默认图片
+const FALLBACK_PHOTOS = [
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop'
+]
+
 export default function TravelSuggest() {
   const [result, setResult] = useState('')
   const [loading, setLoading] = useState(false)
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null)
   const [remainingTime, setRemainingTime] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
+  const [destinationPhotos, setDestinationPhotos] = useState<string[]>([])
+  const [showPhotos, setShowPhotos] = useState(false)
   const startTimeRef = useRef<number>(0)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const [formData, setFormData] = useState<FormData>({
@@ -34,6 +69,31 @@ export default function TravelSuggest() {
     budget: '',
     people: '1'
   })
+
+  // 获取目的地图片
+  const fetchDestinationPhotos = async (destination: string) => {
+    // 先尝试从预设获取
+    const defaultKey = Object.keys(DEFAULT_PHOTOS).find(key => 
+      destination.includes(key)
+    )
+    if (defaultKey) {
+      setDestinationPhotos(DEFAULT_PHOTOS[defaultKey])
+      return
+    }
+
+    // 使用高德 API 搜索景点
+    try {
+      const res = await fetch(`/api/poi/search?keyword=${encodeURIComponent(destination)}&city=${encodeURIComponent(destination)}`)
+      const data = await res.json()
+      if (data.pois && data.pois.length > 0) {
+        // 使用默认图片，因为高德免费 API 不提供图片
+        setDestinationPhotos(FALLBACK_PHOTOS)
+      }
+    } catch (error) {
+      console.error('获取图片失败:', error)
+      setDestinationPhotos(FALLBACK_PHOTOS)
+    }
+  }
 
   // 清理定时器
   useEffect(() => {
@@ -127,6 +187,12 @@ export default function TravelSuggest() {
     }
     setLoading(false)
     setRemainingTime(null)
+    
+    // 获取目的地图片
+    if (formData.destination) {
+      await fetchDestinationPhotos(formData.destination)
+      setShowPhotos(true)
+    }
   }
 
   const copyResult = () => {
@@ -254,19 +320,52 @@ export default function TravelSuggest() {
         )}
 
         {result && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">📋 旅行建议</h2>
-              <button
-                onClick={copyResult}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                复制结果
-              </button>
+          <div className="space-y-4">
+            {/* 目的地图片展示 */}
+            {showPhotos && destinationPhotos.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-4">
+                <h3 className="text-sm font-medium text-gray-500 mb-3">📸 {formData.destination} 景点预览</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {destinationPhotos.map((photo, index) => (
+                    <div key={index} className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                      <img 
+                        src={photo} 
+                        alt={`${formData.destination} ${index + 1}`}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                {/* 小红书攻略跳转 */}
+                <a
+                  href={`https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(formData.destination + '旅游攻略')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition text-sm"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  查看小红书真实攻略
+                </a>
+              </div>
+            )}
+
+            {/* 旅行建议内容 */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">📋 旅行建议</h2>
+                <button
+                  onClick={copyResult}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  复制结果
+                </button>
+              </div>
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+                {result}
+              </pre>
             </div>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
-              {result}
-            </pre>
           </div>
         )}
       </div>
