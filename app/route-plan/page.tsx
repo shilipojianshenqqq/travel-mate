@@ -116,9 +116,37 @@ export default function RoutePlan() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // 解析用户输入的景点并搜索经纬度
+  const parseAndSearchPOIs = async (city: string, attractions: string) => {
+    if (!city || !attractions) return []
+    
+    // 分割景点名称
+    const names = attractions.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+    const pois: Attraction[] = []
+    
+    for (const name of names) {
+      try {
+        const res = await fetch(`/api/poi/search?keyword=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}`)
+        const data = await res.json()
+        if (data.pois && data.pois.length > 0) {
+          // 取第一个搜索结果
+          const poi = data.pois[0]
+          pois.push({
+            name: poi.name,
+            location: poi.location
+          })
+        }
+      } catch (error) {
+        console.error(`搜索 ${name} 失败:`, error)
+      }
+    }
+    
+    return pois
+  }
+
   // 更新地图标记和路线
   useEffect(() => {
-    if (!mapInstanceRef.current || selectedPOIs.length === 0) return
+    if (!mapInstanceRef.current) return
 
     // 清除旧标记和路线
     markersRef.current.forEach(marker => marker.setMap(null))
@@ -128,40 +156,55 @@ export default function RoutePlan() {
       polylineRef.current = null
     }
 
+    // 如果没有景点，不处理
+    if (selectedPOIs.length === 0) return
+
     // 添加新标记
     selectedPOIs.forEach((poi, index) => {
       if (!poi.location) return
       const [lng, lat] = poi.location.split(',').map(Number)
       
+      // 创建信息窗体内容
+      const infoContent = `
+        <div style="padding: 8px; min-width: 120px;">
+          <div style="font-weight: bold; margin-bottom: 4px;">${poi.name}</div>
+          <div style="font-size: 12px; color: #666;">点击查看详情</div>
+        </div>
+      `
+      
       const marker = new window.AMap.Marker({
         position: [lng, lat],
         title: poi.name,
-        icon: new window.AMap.Icon({
-          size: new window.AMap.Size(32, 32),
-          image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
-          imageSize: new window.AMap.Size(32, 32)
-        })
+        content: `
+          <div style="
+            width: 28px;
+            height: 28px;
+            background: #00C853;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border: 2px solid white;
+          ">${index + 1}</div>
+        `,
+        offset: new window.AMap.Pixel(-14, -14)
       })
       
       marker.setMap(mapInstanceRef.current)
       markersRef.current.push(marker)
 
-      // 序号标签
-      const label = new window.AMap.Text({
-        text: String(index + 1),
-        position: [lng, lat],
-        offset: new window.AMap.Pixel(-6, -10),
-        style: {
-          'background-color': '#00C853',
-          'color': '#fff',
-          'padding': '2px 6px',
-          'border-radius': '50%',
-          'font-size': '12px',
-          'font-weight': 'bold'
-        }
+      // 点击标记显示信息窗体
+      marker.on('click', () => {
+        const infoWindow = new window.AMap.InfoWindow({
+          content: infoContent,
+          offset: new window.AMap.Pixel(0, -20)
+        })
+        infoWindow.open(mapInstanceRef.current, [lng, lat])
       })
-      label.setMap(mapInstanceRef.current)
-      markersRef.current.push(label)
     })
 
     // 调整视野
@@ -346,6 +389,18 @@ export default function RoutePlan() {
     setResult('')
     setProgress(0)
     startTimeRef.current = Date.now()
+    
+    // 先解析景点并搜索经纬度，在地图上显示标记
+    if (formData.city && formData.attractions) {
+      const pois = await parseAndSearchPOIs(formData.city, formData.attractions)
+      if (pois.length > 0) {
+        setSelectedPOIs(pois)
+        // 如果有多个景点，规划路线
+        if (pois.length >= 2) {
+          planRoute(pois)
+        }
+      }
+    }
     
     try {
       const res = await fetch('/api/generate', {
