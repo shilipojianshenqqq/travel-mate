@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       estimatedTime = 5 + daysNum * 3 // 每天约 3 秒
       
       prompt = `
-你是一位专业旅游规划师。请直接输出内容，不要输出思考过程，不要输出任何解释，只输出旅行建议。
+请直接输出旅行建议内容，不要输出任何思考过程、推理步骤或分析说明。只按照格式要求输出结果。
 
 【目的地】${destination}
 【出行天数】${days} 天
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 【预算范围】${budget || '不限'}
 【出行人数】${people || 1} 人
 
-请按以下格式生成（用中文，不要有任何思考过程）：
+请按以下格式生成（用中文，只输出内容不要有任何思考过程）：
 📍 行程概览（80-100 字）
 📅 每日安排（每天约 100 字）
 🏨 住宿建议（2-3 个推荐，约 100 字）
@@ -92,9 +92,10 @@ export async function POST(request: Request) {
           const completion = await openai.chat.completions.create({
             model: 'MiniMax-M2.5',
             messages: [{ role: 'user', content: prompt }],
-            max_tokens: 4000,  // 增大输出限制
+            max_tokens: 4000,
             temperature: 0.7,
-            stream: true,  // 启用流式输出
+            thinking: { type: "disabled" },  // 禁用思考过程
+            stream: true,
           })
 
           for await (const chunk of completion) {
