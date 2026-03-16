@@ -42,6 +42,36 @@ const DEFAULT_PHOTOS: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1580810453078-3e8eb385a2a4?w=400&h=300&fit=crop',
     'https://images.unsplash.com/photo-1528181304800-259b08848526?w=400&h=300&fit=crop',
     'https://images.unsplash.com/photo-1585983633883-3995f9a2880f?w=400&h=300&fit=crop'
+  ],
+  '亚庇': [
+    'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=400&h=300&fit=crop'
+  ],
+  '沙巴': [
+    'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=400&h=300&fit=crop'
+  ],
+  '马来西亚': [
+    'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=400&h=300&fit=crop'
+  ],
+  '日本': [
+    'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=400&h=300&fit=crop'
+  ],
+  '泰国': [
+    'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1528181304800-259b08848526?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400&h=300&fit=crop'
+  ],
+  '三亚': [
+    'https://images.unsplash.com/photo-1503131381078-75a5e0b0f67c?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1512113569142-8a60fccc7bfec?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop'
   ]
 }
 

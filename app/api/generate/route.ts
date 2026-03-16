@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       estimatedTime = 5 + daysNum * 3 // 每天约 3 秒
       
       prompt = `
-你是一位专业旅游规划师。请根据以下信息生成旅行建议，只输出内容，不要输出这些要求说明。
+你是一位专业旅游规划师。请直接输出内容，不要输出思考过程，不要输出任何解释，只输出旅行建议。
 
 【目的地】${destination}
 【出行天数】${days} 天
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 【预算范围】${budget || '不限'}
 【出行人数】${people || 1} 人
 
-请按以下格式生成（用中文）：
+请按以下格式生成（用中文，不要有任何思考过程）：
 📍 行程概览（80-100 字）
 📅 每日安排（每天约 100 字）
 🏨 住宿建议（2-3 个推荐，约 100 字）
