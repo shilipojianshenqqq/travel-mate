@@ -76,7 +76,7 @@ export default function RoutePlan() {
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.AMap) {
       const script = document.createElement('script')
-      script.src = `https://webapi.amap.com/maps?v=2.0&key=a7ea668b59f3ec1d33f0534b63b1c76a`
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=5224aec249b193578bddee07d2025b5d`
       script.onload = () => setMapLoaded(true)
       document.head.appendChild(script)
     } else if (window.AMap) {

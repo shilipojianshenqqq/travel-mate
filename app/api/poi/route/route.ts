@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 // 高德地图 Web服务API Key
-const AMAP_KEY = process.env.AMAP_KEY || 'a7ea668b59f3ec1d33f0534b63b1c76a'
+const AMAP_KEY = process.env.AMAP_KEY || '5224aec249b193578bddee07d2025b5d'
 
 // 驾车路径规划
 export async function GET(request: Request) {
