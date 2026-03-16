@@ -94,7 +94,6 @@ export async function POST(request: Request) {
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 4000,
             temperature: 0.7,
-            thinking: { type: "disabled" },  // 禁用思考过程
             stream: true,
           })
 
