@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, MapPin, X, Navigation } from 'lucide-react'
+import { ArrowLeft, Loader2, MapPin, X, Navigation, RefreshCw, Clock, History } from 'lucide-react'
 
 type FormData = {
   city: string
@@ -36,6 +36,38 @@ type RouteInfo = {
   duration: number
 }
 
+type HistoryItem = {
+  id: string
+  city: string
+  attractions: string
+  time: string
+  transport: string
+  result: string
+  createdAt: number
+}
+
+// 骨架屏组件
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+}
+
+// 骨架屏
+function ResultSkeleton() {
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-5 w-16" />
+      </div>
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+    </div>
+  )
+}
+
 declare global {
   interface Window {
     AMap: any
@@ -51,6 +83,9 @@ export default function RoutePlan() {
   const [progress, setProgress] = useState(0)
   const [routing, setRouting] = useState(false)
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [showHistory, setShowHistory] = useState(false)
   const startTimeRef = useRef<number>(0)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const [formData, setFormData] = useState<FormData>({
@@ -71,6 +106,51 @@ export default function RoutePlan() {
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
   const polylineRef = useRef<any>(null)
+
+  // 加载历史记录
+  useEffect(() => {
+    const saved = localStorage.getItem('route-plan-history')
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved))
+      } catch (e) {}
+    }
+  }, [])
+
+  // 保存到历史记录
+  const saveToHistory = (data: FormData, result: string) => {
+    const item: HistoryItem = {
+      id: Date.now().toString(),
+      city: data.city,
+      attractions: data.attractions,
+      time: data.time,
+      transport: data.transport,
+      result,
+      createdAt: Date.now()
+    }
+    const newHistory = [item, ...history].slice(0, 20)
+    setHistory(newHistory)
+    localStorage.setItem('route-plan-history', JSON.stringify(newHistory))
+  }
+
+  // 从历史恢复
+  const restoreFromHistory = (item: HistoryItem) => {
+    setFormData({
+      city: item.city,
+      attractions: item.attractions,
+      time: item.time,
+      transport: item.transport
+    })
+    setResult(item.result)
+    setShowHistory(false)
+  }
+
+  // 删除历史记录
+  const deleteHistory = (id: string) => {
+    const newHistory = history.filter(h => h.id !== id)
+    setHistory(newHistory)
+    localStorage.setItem('route-plan-history', JSON.stringify(newHistory))
+  }
 
   // 加载高德地图
   useEffect(() => {
@@ -387,6 +467,7 @@ export default function RoutePlan() {
     e.preventDefault()
     setLoading(true)
     setResult('')
+    setError(null)
     setProgress(0)
     startTimeRef.current = Date.now()
     
@@ -450,11 +531,16 @@ export default function RoutePlan() {
           }
         }
       }
-    } catch (error) {
-      setResult('请求失败，请检查网络')
+    } catch (error: any) {
+      setError(error.message || '请求失败，请检查网络')
     }
     setLoading(false)
     setRemainingTime(null)
+    
+    // 保存到历史记录
+    if (result) {
+      saveToHistory(formData, result)
+    }
   }
 
   const copyResult = () => {
@@ -487,10 +573,34 @@ export default function RoutePlan() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-80">
       <div className="max-w-2xl mx-auto">
-        <Link href="/" className="inline-flex items-center text-gray-600 hover:text-green-600 mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          返回首页
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/" className="inline-flex items-center text-gray-600 hover:text-green-600">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            返回首页
+          </Link>
+          <button onClick={() => setShowHistory(!showHistory)} className="text-gray-500 hover:text-green-600 flex items-center gap-1 text-sm">
+            <History className="w-4 h-4" />
+            历史记录
+          </button>
+        </div>
+
+        {/* 历史记录面板 */}
+        {showHistory && history.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <h3 className="font-medium mb-3">📜 历史记录</h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {history.map(item => (
+                <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100">
+                  <div className="flex-1 cursor-pointer" onClick={() => restoreFromHistory(item)}>
+                    <div className="text-sm font-medium">{item.city} · {item.attractions}</div>
+                    <div className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString('zh-CN')}</div>
+                  </div>
+                  <button onClick={() => deleteHistory(item.id)} className="text-gray-400 hover:text-red-500 p-1">✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <h1 className="text-2xl font-bold mb-6">🗺️ 规划景点路线</h1>
@@ -620,6 +730,19 @@ export default function RoutePlan() {
           </form>
         </div>
 
+        {/* 错误提示 + 重试按钮 */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="text-red-600 text-sm">{error}</div>
+              <button onClick={(e) => onSubmit(e as any)} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700">
+                <RefreshCw className="w-4 h-4" />
+                重试
+              </button>
+            </div>
+          </div>
+        )}
+
         {loading && (
           <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
@@ -639,7 +762,10 @@ export default function RoutePlan() {
           </div>
         )}
 
-        {result && (
+        {/* 骨架屏 - 加载中显示 */}
+        {loading && <ResultSkeleton />}
+
+        {result && !loading && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">🗓️ 路线规划</h2>
