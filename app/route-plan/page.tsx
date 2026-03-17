@@ -551,9 +551,31 @@ export default function RoutePlan() {
   // 过滤思考过程
   const filterThinking = (text: string): string => {
     return text
-      .replace(/^(让我想想|让我考虑一下|让我分析一下|首先|其次|再次|最后|当然|其实|实际上|简单分析一下|我们来想想|根据|按照|基于).*?[\n，。,.]/gm, '')
-      .replace(/\[?(思考|分析|推理|计算)中[^\]]*\]?/gi, '')
-      .replace(/^[\s,.，,.]+/gm, '')
+      // 移除 [思考中]、[分析中] 等标签
+      .replace(/\[(思考|分析|推理|计算|生成|处理)中\]/gi, '')
+      // 移除思考内容段落（常见模式）
+      .replace(/^【?思考[：:].*$/gm, '')
+      .replace(/^【?分析[：:].*$/gm, '')
+      .replace(/^【?推理[：:].*$/gm, '')
+      .replace(/^让我想想[，,].*$/gm, '')
+      .replace(/^让我考虑一下[，,].*$/gm, '')
+      .replace(/^让我分析一下[，,].*$/gm, '')
+      .replace(/^首先[，,].*$/gm, '')
+      .replace(/^其次[，,].*$/gm, '')
+      .replace(/^再次[，,].*$/gm, '')
+      .replace(/^最后[，,].*$/gm, '')
+      .replace(/^当然[，,].*$/gm, '')
+      .replace(/^其实[，,].*$/gm, '')
+      .replace(/^实际上[，,].*$/gm, '')
+      .replace(/^根据.*?[，,]/gm, '')
+      .replace(/^按照.*?[，,] /gm, '')
+      .replace(/^基于.*?[，,] /gm, '')
+      // 移除英文思考标签
+      .replace(/\[thinking\]/gi, '')
+      .replace(/\[analyzing\]/gi, '')
+      .replace(/\[reasoning\]/gi, '')
+      // 清理多余空白
+      .replace(/^[\s,.，,、]+/gm, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim()
   }
