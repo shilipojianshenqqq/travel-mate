@@ -458,9 +458,22 @@ export default function RoutePlan() {
   }
 
   const copyResult = () => {
-    navigator.clipboard.writeText(result)
+    navigator.clipboard.writeText(filteredResult)
     alert('已复制到剪贴板')
   }
+
+  // 过滤思考过程
+  const filterThinking = (text: string): string => {
+    return text
+      .replace(/^(让我想想|让我考虑一下|让我分析一下|首先|其次|再次|最后|当然|其实|实际上|简单分析一下|我们来想想|根据|按照|基于).*?[\n，。,.]/gm, '')
+      .replace(/\[?(思考|分析|推理|计算)中[^\]]*\]?/gi, '')
+      .replace(/^[\s,.，,.]+/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  }
+
+  // 过滤后的结果
+  const filteredResult = filterThinking(result)
 
   // 格式化距离和时间
   const formatRouteInfo = (info: RouteInfo) => {
@@ -638,7 +651,7 @@ export default function RoutePlan() {
               </button>
             </div>
             <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
-              {result}
+              {filteredResult}
             </pre>
           </div>
         )}

@@ -225,10 +225,27 @@ export default function TravelSuggest() {
     }
   }
 
-  const copyResult = () => {
-    navigator.clipboard.writeText(result)
+  const copyResult = (text: string = filteredResult) => {
+    navigator.clipboard.writeText(text)
     alert('已复制到剪贴板')
   }
+
+  // 过滤思考过程
+  const filterThinking = (text: string): string => {
+    return text
+      // 移除常见思考前缀
+      .replace(/^(让我想想|让我考虑一下|让我分析一下|首先|其次|再次|最后|当然|其实|实际上|简单分析一下|我们来想想|根据|按照|基于).*?[\n，。,.]/gm, '')
+      // 移除 "思考中"、"分析中" 等状态
+      .replace(/\[?(思考|分析|推理|计算)中[^\]]*\]?/gi, '')
+      // 移除 "等等" 类的填充词
+      .replace(/^[\s,.，,.]+/gm, '')
+      // 移除多余的空行
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  }
+
+  // 过滤后的结果
+  const filteredResult = filterThinking(result)
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -386,14 +403,14 @@ export default function TravelSuggest() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">📋 旅行建议</h2>
                 <button
-                  onClick={copyResult}
+                  onClick={() => copyResult(filteredResult)}
                   className="text-sm text-blue-600 hover:text-blue-700"
                 >
                   复制结果
                 </button>
               </div>
               <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
-                {result}
+                {filteredResult}
               </pre>
             </div>
           </div>
